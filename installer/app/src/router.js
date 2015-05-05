@@ -26,6 +26,17 @@ var MainRouter = Router.createClass({
 			});
 		}
 
+		var cloudID = event.params[0].cloud;
+		if (this.history.getHandler(this.history.path).name === 'landingPage') {
+			if (event.context.dataStore.state.currentCluster.getInstallState().selectedCloud !== cloudID) {
+				Dispatcher.dispatch({
+					name: 'SELECT_CLOUD',
+					cloud: cloudID,
+					clusterID: 'new'
+				});
+			}
+		}
+
 		if (event.handler.opts.hasOwnProperty('modalHandler')) {
 			this[event.handler.opts.modalHandler].call(this, event.params, event.handler.opts, event.context);
 		}
@@ -97,6 +108,22 @@ var MainRouter = Router.createClass({
 
 			case 'NAVIGATE':
 				this.history.navigate(event.path, event.options || {});
+			break;
+
+			case 'SELECT_CLOUD':
+				if (this.history.getHandler(this.history.path).name !== 'landingPage') {
+					return;
+				}
+				if (this.history.pathParams[0].cloud === event.cloud) {
+					return;
+				}
+				setTimeout(function () {
+					this.history.navigate('', {
+						params: [{
+							cloud: event.cloud
+						}]
+					});
+				}.bind(this), 0);
 			break;
 		}
 	}
