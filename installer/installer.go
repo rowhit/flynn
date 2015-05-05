@@ -190,8 +190,8 @@ func (i *Installer) FindBaseCluster(id string) (*BaseCluster, error) {
 	c := &BaseCluster{ID: id, installer: i}
 
 	err := i.db.QueryRow(`
-	SELECT CredentialID, Type, State, NumInstances, ControllerKey, ControllerPin, DashboardLoginToken, CACert, SSHKeyName, VpcCIDR, SubnetCIDR, DiscoveryToken, DNSZoneID FROM clusters WHERE ID == $1 AND DeletedAt IS NULL LIMIT 1
-  `, c.ID).Scan(&c.CredentialID, &c.Type, &c.State, &c.NumInstances, &c.ControllerKey, &c.ControllerPin, &c.DashboardLoginToken, &c.CACert, &c.SSHKeyName, &c.VpcCIDR, &c.SubnetCIDR, &c.DiscoveryToken, &c.DNSZoneID)
+	SELECT CredentialID, Type, State, NumInstances, ControllerKey, ControllerPin, DashboardLoginToken, CACert, SSHKeyName, DiscoveryToken FROM clusters WHERE ID == $1 AND DeletedAt IS NULL LIMIT 1
+  `, c.ID).Scan(&c.CredentialID, &c.Type, &c.State, &c.NumInstances, &c.ControllerKey, &c.ControllerPin, &c.DashboardLoginToken, &c.CACert, &c.SSHKeyName, &c.DiscoveryToken)
 	if err != nil {
 		return nil, err
 	}

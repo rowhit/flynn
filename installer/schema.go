@@ -70,11 +70,8 @@ type BaseCluster struct {
 	CACert              string            `json:"ca_cert"`
 	SSHKey              *sshkeygen.SSHKey `json:"-" ql:"-"`
 	SSHKeyName          string            `json:"ssh_key_name,omitempty"`
-	VpcCIDR             string            `json:"vpc_cidr_block,omitempty"`
-	SubnetCIDR          string            `json:"subnet_cidr_block,omitempty"`
 	DiscoveryToken      string            `json:"discovery_token"`
 	InstanceIPs         []string          `json:"instance_ips,omitempty" ql:"-"`
-	DNSZoneID           string            `json:"dns_zone_id,omitempty"`
 	DeletedAt           *time.Time        `json:"deleted_at,omitempty"`
 
 	credential    *Credential
