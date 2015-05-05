@@ -1,8 +1,8 @@
 package installer
 
 import (
-	"code.google.com/p/goauth2/oauth"
-	"github.com/digitalocean/godo"
+	"github.com/flynn/flynn/Godeps/_workspace/src/code.google.com/p/goauth2/oauth"
+	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/digitalocean/godo"
 )
 
 func (c *DigitalOceanCluster) Type() string {

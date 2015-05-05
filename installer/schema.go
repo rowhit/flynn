@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/digitalocean/godo"
+	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/digitalocean/godo"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/aws"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/gen/cloudformation"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/gen/ec2"
