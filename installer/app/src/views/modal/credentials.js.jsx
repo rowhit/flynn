@@ -199,7 +199,12 @@ var Credentials = React.createClass({
 	__handleHide: function () {
 		Dispatcher.dispatch({
 			name: 'NAVIGATE',
-			path: '/'
+			path: '/',
+			options: {
+				params: [{
+					cloud: this.props.cloud
+				}]
+			}
 		});
 	}
 });
