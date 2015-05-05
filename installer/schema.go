@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/digitalocean/godo"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/aws"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/gen/cloudformation"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/gen/ec2"
@@ -53,7 +54,8 @@ type DigitalOceanCluster struct {
 	Region    string     `json:"region"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 
-	base *BaseCluster
+	client *godo.Client
+	base   *BaseCluster
 }
 
 type BaseCluster struct {

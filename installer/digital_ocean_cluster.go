@@ -1,6 +1,9 @@
 package installer
 
-import "errors"
+import (
+	"code.google.com/p/goauth2/oauth"
+	"github.com/digitalocean/godo"
+)
 
 func (c *DigitalOceanCluster) Type() string {
 	const t = "digital_ocean"
@@ -16,7 +19,13 @@ func (c *DigitalOceanCluster) SetBase(base *BaseCluster) {
 }
 
 func (c *DigitalOceanCluster) SetCreds(creds *Credential) error {
-	return errors.New("SetCreds Not Implemented on DigitalOceanCluster")
+	c.base.credential = creds
+	c.base.CredentialID = creds.ID
+	t := &oauth.Transport{
+		Token: &oauth.Token{AccessToken: creds.Secret},
+	}
+	c.client = godo.NewClient(t.Client())
+	return nil
 }
 
 func (c *DigitalOceanCluster) SetDefaultsAndValidate() error {
