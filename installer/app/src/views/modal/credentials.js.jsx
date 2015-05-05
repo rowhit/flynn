@@ -16,7 +16,7 @@ var Credentials = React.createClass({
 					padding: '0.25em 0.5em'
 				}],
 
-				['input[type=text]', {
+				['input[type=text], input[type=password]', {
 					padding: '0.25em 0.5em',
 					width: '100%'
 				}],
@@ -75,13 +75,13 @@ var Credentials = React.createClass({
 					{provider === 'aws' ? (
 						<div>
 							<input ref="key_id" type="text" placeholder="AWS_ACCESS_KEY_ID" />
-							<input ref="key" type="text" placeholder="AWS_ACCESS_KEY_ID" />
+							<input ref="key" type="password" placeholder="AWS_ACCESS_KEY_ID" />
 						</div>
 					) : null}
 
 					{provider === 'digital_ocean' ? (
 						<div>
-							<input ref="key" type="text" placeholder="Personal Access Token" />
+							<input ref="key" type="password" placeholder="Personal Access Token" />
 						</div>
 					) : null}
 
