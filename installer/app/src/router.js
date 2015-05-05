@@ -28,7 +28,8 @@ var MainRouter = Router.createClass({
 
 		var cloudID = event.params[0].cloud;
 		if (this.history.getHandler(this.history.path).name === 'landingPage') {
-			if (event.context.dataStore.state.currentCluster.getInstallState().selectedCloud !== cloudID) {
+			var currentCluster = event.context.dataStore.state.currentCluster;
+			if (currentCluster && currentCluster.getInstallState().selectedCloud !== cloudID) {
 				Dispatcher.dispatch({
 					name: 'SELECT_CLOUD',
 					cloud: cloudID,

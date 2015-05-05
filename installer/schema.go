@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/digitalocean/godo"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/aws"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/gen/cloudformation"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/awslabs/aws-sdk-go/gen/ec2"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/cznic/ql"
+	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/digitalocean/godo"
 	"github.com/flynn/flynn/pkg/sshkeygen"
 )
 
@@ -52,6 +52,7 @@ type AWSCluster struct {
 type DigitalOceanCluster struct {
 	ClusterID string     `json:"cluster_id" ql:"index xCluster"`
 	Region    string     `json:"region"`
+	Size      string     `json:"size"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 
 	client *godo.Client

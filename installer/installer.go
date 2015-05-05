@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/cznic/ql"
+	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/digitalocean/godo"
 	log "github.com/flynn/flynn/Godeps/_workspace/src/gopkg.in/inconshreveable/log15.v2"
 	"github.com/flynn/flynn/pkg/httphelper"
 )
@@ -129,6 +130,28 @@ func (i *Installer) LaunchCluster(c Cluster) error {
 	})
 	c.Run()
 	return nil
+}
+
+func (i *Installer) ListDigitalOceanRegions(creds *Credential) (interface{}, error) {
+	client := digitalOceanClient(creds)
+	regions, r, err := client.Regions.List(&godo.ListOptions{})
+	if err != nil {
+		code := httphelper.UnknownErrorCode
+		if r.StatusCode == 401 {
+			code = httphelper.UnauthorizedErrorCode
+		}
+		return nil, httphelper.JSONError{
+			Code:    code,
+			Message: err.Error(),
+		}
+	}
+	res := make([]godo.Region, 0, len(regions))
+	for _, r := range regions {
+		if r.Available {
+			res = append(res, r)
+		}
+	}
+	return res, err
 }
 
 func (i *Installer) saveCluster(c Cluster) error {

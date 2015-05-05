@@ -5,6 +5,13 @@ import (
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/digitalocean/godo"
 )
 
+func digitalOceanClient(creds *Credential) *godo.Client {
+	t := &oauth.Transport{
+		Token: &oauth.Token{AccessToken: creds.Secret},
+	}
+	return godo.NewClient(t.Client())
+}
+
 func (c *DigitalOceanCluster) Type() string {
 	const t = "digital_ocean"
 	return t
@@ -21,10 +28,7 @@ func (c *DigitalOceanCluster) SetBase(base *BaseCluster) {
 func (c *DigitalOceanCluster) SetCreds(creds *Credential) error {
 	c.base.credential = creds
 	c.base.CredentialID = creds.ID
-	t := &oauth.Transport{
-		Token: &oauth.Token{AccessToken: creds.Secret},
-	}
-	c.client = godo.NewClient(t.Client())
+	c.client = digitalOceanClient(creds)
 	return nil
 }
 
@@ -34,6 +38,12 @@ func (c *DigitalOceanCluster) SetDefaultsAndValidate() error {
 }
 
 func (c *DigitalOceanCluster) Run() {
+	// - Create key pair
+	// - Allocate domain
+	// - Create droplet with ubuntu image
+	// - Run flynn installer on droplet
+	// - Configure DNS / Create domain record
+	// - Bootstrap layer 1
 }
 
 func (c *DigitalOceanCluster) Delete() {

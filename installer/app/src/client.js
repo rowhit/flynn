@@ -45,6 +45,31 @@ var Client = {
 		});
 	},
 
+	listCloudRegions: function (cloud, credentialID) {
+		return this.performRequest('GET', {
+			url: Config.endpoints.regions,
+			params: [{
+				cloud: cloud,
+				credential_id: credentialID
+			}]
+		}).then(function (args) {
+			var res = args[0];
+			Dispatcher.dispatch({
+				name: 'CLOUD_REGIONS',
+				cloud: cloud,
+				credentialID: credentialID,
+				regions: res
+			});
+		}).catch(function () {
+			Dispatcher.dispatch({
+				name: 'CLOUD_REGIONS',
+				cloud: cloud,
+				credentialID: credentialID,
+				regions: []
+			});
+		});
+	},
+
 	launchCluster: function (data) {
 		this.performRequest('POST', {
 			url: Config.endpoints.clusters,

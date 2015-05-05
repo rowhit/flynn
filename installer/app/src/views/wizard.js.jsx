@@ -48,11 +48,11 @@ var Wizard = React.createClass({
 							<RouteLink path={'/credentials?cloud='+ state.selectedCloud} style={BtnCSS}>Add credentials to continue</RouteLink>
 						)}
 
-						{state.currentStep === 'configure' && state.selectedCloud === 'aws' ? (
+						{state.currentStep === 'configure' && state.selectedCloud === 'aws' && state.credentialID ? (
 							<AWSLauncher state={state} />
 						) : null}
 
-						{state.currentStep === 'configure' && state.selectedCloud === 'digital_ocean' ? (
+						{state.currentStep === 'configure' && state.selectedCloud === 'digital_ocean' && state.credentialID ? (
 							<DigitalOceanLauncher state={state} />
 						) : null}
 

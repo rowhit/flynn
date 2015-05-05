@@ -57,6 +57,7 @@ func ServeHTTP() error {
 				"events":      "/events",
 				"prompt":      "/clusters/:id/prompts/:prompt_id",
 				"credentials": "/credentials",
+				"regions":     "/regions",
 			},
 		},
 	}
@@ -80,6 +81,7 @@ func ServeHTTP() error {
 	httpRouter.GET("/assets/*assetPath", api.ServeAsset)
 	httpRouter.POST("/credentials", api.NewCredential)
 	httpRouter.DELETE("/credentials/:type/:id", api.DeleteCredential)
+	httpRouter.GET("/regions", api.GetCloudRegions)
 
 	l, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -269,6 +271,27 @@ func (api *httpAPI) DeleteCredential(w http.ResponseWriter, req *http.Request, p
 		return
 	}
 	w.WriteHeader(200)
+}
+
+func (api *httpAPI) GetCloudRegions(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	params := req.URL.Query()
+	cloud := params.Get("cloud")
+	if cloud != "digital_ocean" {
+		httphelper.ObjectNotFoundError(w, "")
+		return
+	}
+	credentialID := params.Get("credential_id")
+	creds, err := api.Installer.FindCredentials(credentialID)
+	if err != nil {
+		httphelper.ValidationError(w, "credential_id", "Invalid credential id")
+		return
+	}
+	res, err := api.Installer.ListDigitalOceanRegions(creds)
+	if err != nil {
+		httphelper.Error(w, err)
+		return
+	}
+	httphelper.JSON(w, 200, res)
 }
 
 func (api *httpAPI) ServeApplicationJS(w http.ResponseWriter, req *http.Request, params httprouter.Params) {

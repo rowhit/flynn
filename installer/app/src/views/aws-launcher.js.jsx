@@ -10,45 +10,43 @@ var InstallConfig = React.createClass({
 	render: function () {
 		return (
 			<form onSubmit={this.__handleSubmit}>
-				{this.state.credentialID ? (
-					<div>
-						<br />
-						<br />
-						<AWSRegionPicker
-							value={this.state.region}
-							onChange={this.__handleRegionChange} />
-						<br />
-						<br />
-						<AWSInstanceTypePicker
-							value={this.state.instanceType}
-							onChange={this.__handleInstanceTypeChange} />
-						<br />
-						<br />
-						<label>
-							<div>Number of instances: </div>
-							<div style={{
-								width: 60
-								}}>
-								<IntegerPicker
-									minValue={1}
-									maxValue={5}
-									skipValues={[2]}
-									value={this.state.numInstances}
-									onChange={this.__handleNumInstancesChange} />
-							</div>
-						</label>
-						<br />
-						<br />
-						<AWSAdvancedOptions onChange={this.__handleAdvancedOptionsChange}/>
-						<br />
-						<br />
-						<button
-							type="submit"
-							style={extend({}, GreenBtnCSS,
-								this.state.launchBtnDisabled ? BtnDisabledCSS : {})}
-							disabled={this.state.launchBtnDisabled}>Launch</button>
-					</div>
-				) : null}
+				<div>
+					<br />
+					<br />
+					<AWSRegionPicker
+						value={this.state.region}
+						onChange={this.__handleRegionChange} />
+					<br />
+					<br />
+					<AWSInstanceTypePicker
+						value={this.state.instanceType}
+						onChange={this.__handleInstanceTypeChange} />
+					<br />
+					<br />
+					<label>
+						<div>Number of instances: </div>
+						<div style={{
+							width: 60
+							}}>
+							<IntegerPicker
+								minValue={1}
+								maxValue={5}
+								skipValues={[2]}
+								value={this.state.numInstances}
+								onChange={this.__handleNumInstancesChange} />
+						</div>
+					</label>
+					<br />
+					<br />
+					<AWSAdvancedOptions onChange={this.__handleAdvancedOptionsChange}/>
+					<br />
+					<br />
+					<button
+						type="submit"
+						style={extend({}, GreenBtnCSS,
+							this.state.launchBtnDisabled ? BtnDisabledCSS : {})}
+						disabled={this.state.launchBtnDisabled}>Launch</button>
+				</div>
 			</form>
 		);
 	},

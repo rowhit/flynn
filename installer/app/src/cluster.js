@@ -1,6 +1,7 @@
 import { createClass } from 'marbles/utils';
 import State from 'marbles/state';
 import Config from './config';
+import Dispatcher from './dispatcher';
 
 var Cluster = createClass({
 	willInitialize: function (attrs) {
@@ -23,7 +24,10 @@ var Cluster = createClass({
 			deleting: false,
 			failed: false,
 			errorDismissed: false,
-			__credentials: []
+			__credentials: [],
+			regions: [],
+			selectedRegionSlug: null,
+			selectedSizeSlug: null
 		};
 		var state = {
 			inProgress: false,
@@ -37,7 +41,7 @@ var Cluster = createClass({
 				{ id: 'dashboard', label: 'Dashboard', complete: false }
 			],
 			currentStep: 'configure',
-			selectedCloud: attrs.selectedCloud || prevState.selectedCloud,
+			selectedCloud: attrs.selectedCloud || attrs.type || prevState.selectedCloud,
 			credentialID: attrs.credentialID || prevState.credentialID,
 			certVerified: attrs.certVerified || prevState.certVerified,
 
@@ -46,9 +50,28 @@ var Cluster = createClass({
 			dashboardLoginToken: attrs.dashboard_login_token || prevState.dashboardLoginToken,
 
 			__credentials: attrs.credentials || prevState.__credentials,
+			regions: attrs.regions || prevState.regions,
+			selectedRegionSlug: attrs.selectedRegionSlug || prevState.selectedRegionSlug,
+			selectedRegion: null,
+			selectedSizeSlug: attrs.selectedSizeSlug || prevState.selectedSizeSlug,
 
 			prompt: prevState.prompt
 		};
+
+		if (state.selectedRegionSlug === null && state.regions.length > 0) {
+			state.selectedRegionSlug = state.regions[0].slug;
+		}
+
+		for (var i = 0, len = state.regions.length; i < len; i++) {
+			if (state.regions[i].slug === state.selectedRegionSlug) {
+				state.selectedRegion = state.regions[i];
+				break;
+			}
+		}
+
+		if (state.selectedSizeSlug === null && state.selectedRegion) {
+			state.selectedSizeSlug = state.selectedRegion.sizes[0];
+		}
 
 		var credentialIDExists = false;
 		state.credentials = state.__credentials.filter(function (creds) {
@@ -123,6 +146,14 @@ var Cluster = createClass({
 	},
 
 	__setInstallState: function (newState) {
+		var prevCredentialID = this.__installState.state.credentialID;
+		if (newState.credentialID !== prevCredentialID && newState.selectedCloud === 'digital_ocean') {
+			Dispatcher.dispatch({
+				name: 'SELECTED_CREDENTIAL_ID_CHANGE',
+				credentialID: newState.credentialID,
+				cloud: newState.selectedCloud
+			});
+		}
 		this.__installState.setState(newState);
 	},
 
@@ -210,6 +241,30 @@ var Cluster = createClass({
 					credentials: event.credentials
 				}));
 			break;
+
+			case 'CLOUD_REGIONS':
+				var state = this.getInstallState();
+				if (state.credentialID !== event.credentialID || state.selectedCloud !== event.cloud) {
+					return;
+				}
+				this.__setInstallState(this.__computeInstallState({
+					regions: event.regions.sort(function (a, b) {
+						return a.name.localeCompare(b.name);
+					})
+				}));
+			break;
+
+			case 'SELECT_REGION':
+				this.__setInstallState(this.__computeInstallState({
+					selectedRegionSlug: event.slug
+				}));
+			break;
+
+			case 'SELECT_SIZE':
+				this.__setInstallState(this.__computeInstallState({
+					selectedSizeSlug: event.slug
+				}));
+			break;
 		}
 	},
 
@@ -227,6 +282,7 @@ Cluster.jsonFields = {
 	type: 'type',
 	state: 'state',
 	region: 'region',
+	size: 'size',
 	num_instances: 'numInstances',
 	instance_type: 'instanceType',
 	controller_key: 'controllerKey',

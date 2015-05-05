@@ -36,6 +36,10 @@ export default createClass({
 				this.launchAWS(event);
 			break;
 
+			case 'LAUNCH_DIGITAL_OCEAN':
+				this.launchDigitalOcean(event);
+			break;
+
 			case 'NEW_CLUSTER':
 				this.__addCluster(event.cluster);
 			break;
@@ -49,9 +53,16 @@ export default createClass({
 			break;
 
 			case 'CURRENT_CLUSTER':
+				cluster = event.clusterID === null ? newCluster : this.__findCluster(event.clusterID);
+				if ( !cluster ) {
+					setTimeout(function () {
+						throw new Error("CURRENT_CLUSTER Error: Unknown cluster id "+ JSON.stringify(event.clusterID));
+					}, 0);
+					break;
+				}
 				this.setState({
 					currentClusterID: event.clusterID,
-					currentCluster: event.clusterID === null ? newCluster : this.__findCluster(event.clusterID)
+					currentCluster: cluster
 				});
 			break;
 
@@ -111,6 +122,14 @@ export default createClass({
 				newCluster.handleEvent(event);
 			break;
 
+			case 'SELECTED_CREDENTIAL_ID_CHANGE':
+				Client.listCloudRegions(event.cloud, event.credentialID);
+			break;
+
+			case 'CLOUD_REGIONS':
+				newCluster.handleEvent(event);
+			break;
+
 			default:
 				if (event.name === "CLUSTER_STATE" && event.state === "deleted") {
 					this.__removeCluster(event.clusterID);
@@ -143,6 +162,17 @@ export default createClass({
 		if (inputs.subnetCidr) {
 			cluster.subnetCidr = inputs.subnetCidr;
 		}
+
+		Client.launchCluster(cluster.toJSON());
+	},
+
+	launchDigitalOcean: function () {
+		var state = newCluster.getInstallState();
+		var cluster = new Cluster({});
+		cluster.type = 'digital_ocean';
+		cluster.credentialID = state.credentialID;
+		cluster.region = state.selectedRegionSlug;
+		cluster.size = state.selectedSizeSlug;
 
 		Client.launchCluster(cluster.toJSON());
 	},
