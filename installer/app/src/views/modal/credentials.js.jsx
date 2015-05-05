@@ -53,12 +53,12 @@ var Credentials = React.createClass({
 	},
 
 	render: function () {
-		var provider = this.props.provider;
+		var cloud = this.props.cloud;
 		return (
 			<Modal visible={true} onHide={this.__handleHide}>
 				<h2>Credentials</h2>
 
-				<PrettySelect onChange={this.__handleProviderChange} value={provider}>
+				<PrettySelect onChange={this.__handleCloudChange} value={cloud}>
 					<option value="aws">AWS</option>
 					<option value="digital_ocean">Digital Ocean</option>
 				</PrettySelect>
@@ -72,14 +72,14 @@ var Credentials = React.createClass({
 
 					<input ref="name" type="text" placeholder="Nickname" />
 
-					{provider === 'aws' ? (
+					{cloud === 'aws' ? (
 						<div>
 							<input ref="key_id" type="text" placeholder="AWS_ACCESS_KEY_ID" />
 							<input ref="key" type="password" placeholder="AWS_ACCESS_KEY_ID" />
 						</div>
 					) : null}
 
-					{provider === 'digital_ocean' ? (
+					{cloud === 'digital_ocean' ? (
 						<div>
 							<input ref="key" type="password" placeholder="Personal Access Token" />
 						</div>
@@ -90,11 +90,11 @@ var Credentials = React.createClass({
 
 				<ul id={this.props.listStyleEl.id}>
 					{this.state.credentials.filter(function (creds) {
-						return creds.type === provider;
+						return creds.type === cloud;
 					}).map(function (creds) {
 						return (
 							<li key={creds.id}>
-								{provider === 'digital_ocean' ? (
+								{cloud === 'digital_ocean' ? (
 									<span>{creds.name}</span>
 								) : (
 									<span>{creds.name} ({creds.id})</span>
@@ -102,7 +102,7 @@ var Credentials = React.createClass({
 								<a href="#delete" onClick={function (e) {
 									e.preventDefault();
 									var msg = 'Delete credential "'+ creds.name +'"';
-									if (provider !== 'digital_ocean') {
+									if (cloud !== 'digital_ocean') {
 										msg += ' ('+ creds.id +')';
 									}
 									msg += '?';
@@ -149,7 +149,7 @@ var Credentials = React.createClass({
 	__handleSubmit: function (e) {
 		e.preventDefault();
 		var id;
-		if (this.props.provider === 'digital_ocean') {
+		if (this.props.cloud === 'digital_ocean') {
 			id = 'access-token-'+ Date.now();
 		} else {
 			id = this.refs.key_id.getDOMNode().value.trim();
@@ -174,24 +174,24 @@ var Credentials = React.createClass({
 				name: name,
 				id: id,
 				secret: secret,
-				type: this.props.provider
+				type: this.props.cloud
 			}
 		});
 		this.refs.name.getDOMNode().value = '';
-		if (this.props.provider !== 'digital_ocean') {
+		if (this.props.cloud !== 'digital_ocean') {
 			this.refs.key_id.getDOMNode().value = '';
 		}
 		this.refs.key.getDOMNode().value = '';
 		this.refs.name.getDOMNode().focus();
 	},
 
-	__handleProviderChange: function (e) {
-		var provider = e.target.value;
+	__handleCloudChange: function (e) {
+		var cloud = e.target.value;
 		Dispatcher.dispatch({
 			name: 'NAVIGATE',
 			path: '/credentials',
 			options: {
-				params: [{ provider: provider }]
+				params: [{ cloud: cloud }]
 			}
 		});
 	},

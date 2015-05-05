@@ -45,7 +45,7 @@ var Wizard = React.createClass({
 								) : null}
 							</CredentialsPicker>
 						) : (
-							<RouteLink path={'/credentials?provider='+ state.selectedCloud} style={BtnCSS}>Add credentials to continue</RouteLink>
+							<RouteLink path={'/credentials?cloud='+ state.selectedCloud} style={BtnCSS}>Add credentials to continue</RouteLink>
 						)}
 
 						{state.currentStep === 'configure' && state.selectedCloud === 'aws' ? (
