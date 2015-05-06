@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -198,19 +197,9 @@ func (i *Installer) dbInsertItem(tableName string, item interface{}) error {
 	i.dbMtx.Lock()
 	defer i.dbMtx.Unlock()
 
-	rows, err := i.db.Query(fmt.Sprintf("SELECT * FROM %s LIMIT 0", tableName))
+	fields, err := i.dbMarshalItem(tableName, item)
 	if err != nil {
 		return err
-	}
-	cols, err := rows.Columns()
-	if err != nil {
-		return err
-	}
-
-	v := reflect.Indirect(reflect.ValueOf(item))
-	fields := make([]interface{}, len(cols))
-	for idx, c := range cols {
-		fields[idx] = v.FieldByName(c).Interface()
 	}
 
 	vStr := make([]string, 0, len(fields))

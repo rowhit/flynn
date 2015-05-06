@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
-	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/cznic/ql"
 	"github.com/flynn/flynn/Godeps/_workspace/src/github.com/digitalocean/godo"
 	log "github.com/flynn/flynn/Godeps/_workspace/src/gopkg.in/inconshreveable/log15.v2"
 	"github.com/flynn/flynn/pkg/httphelper"
@@ -154,6 +154,24 @@ func (i *Installer) ListDigitalOceanRegions(creds *Credential) (interface{}, err
 	return res, err
 }
 
+func (i *Installer) dbMarshalItem(tableName string, item interface{}) ([]interface{}, error) {
+	rows, err := i.db.Query(fmt.Sprintf("SELECT * FROM %s LIMIT 0", tableName))
+	if err != nil {
+		return nil, err
+	}
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	v := reflect.Indirect(reflect.ValueOf(item))
+	fields := make([]interface{}, len(cols))
+	for idx, c := range cols {
+		fields[idx] = v.FieldByName(c).Interface()
+	}
+	return fields, nil
+}
+
 func (i *Installer) saveCluster(c Cluster) error {
 	i.dbMtx.Lock()
 	defer i.dbMtx.Unlock()
@@ -163,7 +181,7 @@ func (i *Installer) saveCluster(c Cluster) error {
 	base.Type = c.Type()
 	base.Name = base.ID
 
-	baseFields, err := ql.Marshal(base)
+	baseFields, err := i.dbMarshalItem("clusters", base)
 	if err != nil {
 		return err
 	}
@@ -172,7 +190,8 @@ func (i *Installer) saveCluster(c Cluster) error {
 		baseVStr = append(baseVStr, fmt.Sprintf("$%d", idx+1))
 	}
 
-	clusterFields, err := ql.Marshal(c)
+	tableName := strings.Join([]string{base.Type, "clusters"}, "_")
+	clusterFields, err := i.dbMarshalItem(tableName, c)
 	if err != nil {
 		return err
 	}
@@ -192,7 +211,7 @@ func (i *Installer) saveCluster(c Cluster) error {
 		tx.Rollback()
 		return err
 	}
-	if _, err := tx.Exec(fmt.Sprintf("INSERT INTO %s_clusters VALUES (%s)", c.Type(), strings.Join(clusterVStr, ",")), clusterFields...); err != nil {
+	if _, err := tx.Exec(fmt.Sprintf("INSERT INTO %s VALUES (%s)", tableName, strings.Join(clusterVStr, ",")), clusterFields...); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -301,7 +320,7 @@ func (i *Installer) FindDigitalOceanCluster(id string) (*DigitalOceanCluster, er
 		base:      base,
 	}
 
-	if err := i.db.QueryRow(`SELECT Region, Size FROM digital_ocean_clusters WHERE ClusterID == $1 AND DeletedAt IS NULL LIMIT 1`, base.ID).Scan(&cluster.Region, &cluster.Size); err != nil {
+	if err := i.db.QueryRow(`SELECT Region, Size, KeyFingerprint, DropletID FROM digital_ocean_clusters WHERE ClusterID == $1 AND DeletedAt IS NULL LIMIT 1`, base.ID).Scan(&cluster.Region, &cluster.Size, &cluster.KeyFingerprint, &cluster.DropletID); err != nil {
 		return nil, err
 	}
 

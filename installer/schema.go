@@ -50,10 +50,12 @@ type AWSCluster struct {
 }
 
 type DigitalOceanCluster struct {
-	ClusterID string     `json:"cluster_id" ql:"index xCluster"`
-	Region    string     `json:"region"`
-	Size      string     `json:"size"`
-	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+	ClusterID      string     `json:"cluster_id" ql:"index xCluster"`
+	Region         string     `json:"region"`
+	Size           string     `json:"size"`
+	KeyFingerprint string     `json:"key_fingerprint"`
+	DropletID      int64      `json:"droplet_id"`
+	DeletedAt      *time.Time `json:"deleted_at,omitempty"`
 
 	client *godo.Client
 	base   *BaseCluster

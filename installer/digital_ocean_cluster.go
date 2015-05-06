@@ -44,17 +44,25 @@ func (c *DigitalOceanCluster) SetDefaultsAndValidate() error {
 	return nil
 }
 
+func (c *DigitalOceanCluster) saveField(field string, value interface{}) error {
+	c.base.installer.dbMtx.Lock()
+	defer c.base.installer.dbMtx.Unlock()
+	return c.base.installer.txExec(fmt.Sprintf(`
+  UPDATE digital_ocean_clusters SET %s = $2 WHERE ClusterID == $1
+  `, field), c.ClusterID, value)
+}
+
 func (c *DigitalOceanCluster) Run() {
 	go func() {
 		// defer c.base.handleDone()
 
 		steps := []func() error{
 			c.createKeyPair,
-			// - Allocate domain
-			// - Create droplet with ubuntu image
-			// - Run flynn installer on droplet
-			// - Configure DNS / Create domain record
-			// - Bootstrap layer 1
+			c.base.allocateDomain,
+			c.createDroplet,
+			c.installFlynn,
+			c.configureDNS,
+			c.bootstrap,
 		}
 
 		for _, step := range steps {
@@ -98,19 +106,21 @@ func (c *DigitalOceanCluster) createKeyPair() error {
 		}
 	}
 
-	if _, _, err := c.client.Keys.Create(&godo.KeyCreateRequest{
+	key, _, err := c.client.Keys.Create(&godo.KeyCreateRequest{
 		Name:      keypairName,
 		PublicKey: string(keypair.PublicKey),
-	}); err != nil {
-		fmt.Printf("Err creating key pair: %T(%s)\n", err, err)
-		return err
-	}
+	})
 	if err != nil {
+		fmt.Printf("Err creating key pair: %T(%s)\n", err, err)
 		return err
 	}
 
 	c.base.SSHKey = keypair
 	c.base.SSHKeyName = keypairName
+	c.KeyFingerprint = key.Fingerprint
+	if err := c.saveField("KeyFingerprint", c.KeyFingerprint); err != nil {
+		return err
+	}
 
 	err = saveSSHKey(keypairName, keypair)
 	if err != nil {
@@ -131,6 +141,10 @@ func (c *DigitalOceanCluster) loadKeyPair(name string) error {
 	}
 	c.base.SSHKey = keypair
 	c.base.SSHKeyName = key.Name
+	c.KeyFingerprint = fingerprint
+	if err := c.saveField("KeyFingerprint", c.KeyFingerprint); err != nil {
+		return err
+	}
 	return saveSSHKey(c.base.SSHKeyName, keypair)
 }
 
@@ -145,6 +159,43 @@ func (c *DigitalOceanCluster) fingerprintSSHKey(privateKey *rsa.PrivateKey) (str
 		strbytes[i] = fmt.Sprintf("%02x", b)
 	}
 	return strings.Join(strbytes, ":"), nil
+}
+
+func (c *DigitalOceanCluster) createDroplet() error {
+	c.base.SendLog("Creating droplet")
+	dr, _, err := c.client.Droplets.Create(&godo.DropletCreateRequest{
+		Name:   c.base.Name,
+		Region: c.Region,
+		Size:   c.Size,
+		Image: godo.DropletCreateImage{
+			Slug: "ubuntu-14-04-x64",
+		},
+		SSHKeys: []godo.DropletCreateSSHKey{{
+			Fingerprint: c.KeyFingerprint,
+		}},
+	})
+	if err != nil {
+		return err
+	}
+	droplet := dr.Droplet
+	c.DropletID = int64(droplet.ID)
+	if err := c.saveField("DropletID", c.DropletID); err != nil {
+		return err
+	}
+	fmt.Printf("%#v\n", droplet)
+	return nil
+}
+
+func (c *DigitalOceanCluster) installFlynn() error {
+	return nil
+}
+
+func (c *DigitalOceanCluster) configureDNS() error {
+	return nil
+}
+
+func (c *DigitalOceanCluster) bootstrap() error {
+	return nil
 }
 
 func (c *DigitalOceanCluster) Delete() {
