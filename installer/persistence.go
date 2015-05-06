@@ -76,3 +76,28 @@ func loadSSHKey(name string) (*sshkeygen.SSHKey, error) {
 	}
 	return key, nil
 }
+
+func loadSSHKeys() ([]*sshkeygen.SSHKey, error) {
+	var keys []*sshkeygen.SSHKey
+	walkFn := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) == ".pub" {
+			return nil
+		}
+		key, err := loadSSHKey(info.Name())
+		if err != nil {
+			return err
+		}
+		keys = append(keys, key)
+		return nil
+	}
+	if err := filepath.Walk(keysDir, walkFn); err != nil {
+		return nil, err
+	}
+	return keys, nil
+}

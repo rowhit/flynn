@@ -280,7 +280,32 @@ func (i *Installer) FindCluster(id string) (Cluster, error) {
 }
 
 func (i *Installer) FindDigitalOceanCluster(id string) (*DigitalOceanCluster, error) {
-	return nil, errors.New("Not implemented")
+	i.clustersMtx.RLock()
+	for _, c := range i.clusters {
+		if cluster, ok := c.(*DigitalOceanCluster); ok {
+			if cluster.ClusterID == id {
+				i.clustersMtx.RUnlock()
+				return cluster, nil
+			}
+		}
+	}
+	i.clustersMtx.RUnlock()
+
+	base, err := i.FindBaseCluster(id)
+	if err != nil {
+		return nil, err
+	}
+
+	cluster := &DigitalOceanCluster{
+		ClusterID: base.ID,
+		base:      base,
+	}
+
+	if err := i.db.QueryRow(`SELECT Region, Size FROM digital_ocean_clusters WHERE ClusterID == $1 AND DeletedAt IS NULL LIMIT 1`, base.ID).Scan(&cluster.Region, &cluster.Size); err != nil {
+		return nil, err
+	}
+
+	return cluster, nil
 }
 
 func (i *Installer) FindAWSCluster(id string) (*AWSCluster, error) {
@@ -321,11 +346,11 @@ func (i *Installer) FindAWSCluster(id string) (*AWSCluster, error) {
 }
 
 func (i *Installer) DeleteCluster(id string) error {
-	awsCluster, err := i.FindAWSCluster(id)
+	cluster, err := i.FindCluster(id)
 	if err != nil {
 		return err
 	}
-	go awsCluster.Delete()
+	go cluster.Delete()
 	return nil
 }
 
