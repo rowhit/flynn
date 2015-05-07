@@ -324,6 +324,8 @@ func (i *Installer) FindDigitalOceanCluster(id string) (*DigitalOceanCluster, er
 		return nil, err
 	}
 
+	cluster.SetCreds(base.credential)
+
 	return cluster, nil
 }
 

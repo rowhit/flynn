@@ -1,6 +1,7 @@
 package installer
 
 import (
+	"bufio"
 	"bytes"
 	"database/sql"
 	"encoding/base64"
@@ -169,41 +170,62 @@ func (c *BaseCluster) allocateDomain() error {
 	return c.saveDomain()
 }
 
-func instanceRunCmd(cmd string, sshConfig *ssh.ClientConfig, ipAddress string) (stdout, stderr io.Reader, err error) {
-	var sshConn *ssh.Client
-	sshConn, err = ssh.Dial("tcp", ipAddress+":22", sshConfig)
+func (c *BaseCluster) instanceRunCmd(cmd string, sshConfig *ssh.ClientConfig, ipAddress string) error {
+	c.SendLog(fmt.Sprintf("Running `%s`on %s", cmd, ipAddress))
+
+	sshConn, err := ssh.Dial("tcp", ipAddress+":22", sshConfig)
 	if err != nil {
-		return
+		return err
 	}
 	defer sshConn.Close()
 
 	sess, err := sshConn.NewSession()
 	if err != nil {
-		return
+		return err
 	}
-	stdout, err = sess.StdoutPipe()
+	stdout, err := sess.StdoutPipe()
 	if err != nil {
-		return
+		return err
 	}
-	stderr, err = sess.StderrPipe()
+	stderr, err := sess.StderrPipe()
 	if err != nil {
-		return
+		return err
 	}
 	if err = sess.Start(cmd); err != nil {
-		return
+		return err
 	}
 
-	err = sess.Wait()
-	return
+	go func() {
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			c.SendLog(scanner.Text())
+		}
+	}()
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			c.SendLog(scanner.Text())
+		}
+	}()
+
+	return sess.Wait()
 }
 
 func (c *BaseCluster) uploadDebugInfo(sshConfig *ssh.ClientConfig, ipAddress string) {
 	cmd := "sudo flynn-host collect-debug-info"
-	stdout, stderr, _ := instanceRunCmd(cmd, sshConfig, ipAddress)
-	var buf bytes.Buffer
-	io.Copy(&buf, stdout)
-	io.Copy(&buf, stderr)
-	c.SendLog(fmt.Sprintf("`%s` output for %s: %s", cmd, ipAddress, buf.String()))
+	c.instanceRunCmd(cmd, sshConfig, ipAddress)
+}
+
+func (c *BaseCluster) sshConfig() (*ssh.ClientConfig, error) {
+	signer, err := ssh.NewSignerFromKey(c.SSHKey.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	sshConfig := &ssh.ClientConfig{
+		User: c.SSHUsername,
+		Auth: []ssh.AuthMethod{ssh.PublicKeys(signer)},
+	}
+	return sshConfig, nil
 }
 
 type stepInfo struct {
@@ -225,13 +247,9 @@ func (c *BaseCluster) bootstrap() error {
 	// bootstrap only needs to run on one instance
 	ipAddress := c.InstanceIPs[0]
 
-	signer, err := ssh.NewSignerFromKey(c.SSHKey.PrivateKey)
+	sshConfig, err := c.sshConfig()
 	if err != nil {
-		return err
-	}
-	sshConfig := &ssh.ClientConfig{
-		User: "ubuntu",
-		Auth: []ssh.AuthMethod{ssh.PublicKeys(signer)},
+		return nil
 	}
 
 	attempts := 0

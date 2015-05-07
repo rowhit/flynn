@@ -118,6 +118,8 @@ func (c *AWSCluster) SetDefaultsAndValidate() error {
 		return err
 	}
 
+	c.base.SSHUsername = "ubuntu"
+
 	if err := c.base.SetDefaultsAndValidate(); err != nil {
 		return err
 	}

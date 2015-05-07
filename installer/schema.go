@@ -57,8 +57,9 @@ type DigitalOceanCluster struct {
 	DropletID      int64      `json:"droplet_id"`
 	DeletedAt      *time.Time `json:"deleted_at,omitempty"`
 
-	client *godo.Client
-	base   *BaseCluster
+	base    *BaseCluster
+	client  *godo.Client
+	droplet *godo.Droplet
 }
 
 type BaseCluster struct {
@@ -75,6 +76,7 @@ type BaseCluster struct {
 	CACert              string            `json:"ca_cert"`
 	SSHKey              *sshkeygen.SSHKey `json:"-" ql:"-"`
 	SSHKeyName          string            `json:"ssh_key_name,omitempty"`
+	SSHUsername         string            `json:"-" ql:"-"`
 	DiscoveryToken      string            `json:"discovery_token"`
 	InstanceIPs         []string          `json:"instance_ips,omitempty" ql:"-"`
 	DeletedAt           *time.Time        `json:"deleted_at,omitempty"`
