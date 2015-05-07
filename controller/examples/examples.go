@@ -100,7 +100,7 @@ func main() {
 
 	// TODO: GET /apps/:app_id/jobs/:job_id/log (event-stream)
 
-	var out io.Writer
+	var out *os.File
 	if len(os.Args) > 1 {
 		var err error
 		out, err = os.Create(os.Args[1])

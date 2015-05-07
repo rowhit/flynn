@@ -2,7 +2,8 @@ package examplegenerator
 
 import (
 	"encoding/json"
-	"io"
+	"fmt"
+	"os"
 
 	"github.com/flynn/flynn/pkg/httprecorder"
 )
@@ -12,7 +13,7 @@ type Example struct {
 	Runner func()
 }
 
-func WriteOutput(r *httprecorder.Recorder, examples []Example, out io.Writer) error {
+func WriteOutput(r *httprecorder.Recorder, examples []Example, out *os.File) error {
 	res := make(map[string]*httprecorder.CompiledRequest)
 	for _, ex := range examples {
 		ex.Runner()
@@ -25,5 +26,7 @@ func WriteOutput(r *httprecorder.Recorder, examples []Example, out io.Writer) er
 		return err
 	}
 	_, err = out.Write(data)
+	fmt.Fprintf(out, "len(data) = %d\n", len(data))
+	out.Sync()
 	return err
 }
